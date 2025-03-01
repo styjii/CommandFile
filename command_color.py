@@ -101,12 +101,12 @@ class MainCommand(LoadData):
         self.title_style(f"{action.upper()} FILES:")
 
         src_files = self._find_files(self.from_dir)
-        dst_files = {f.name for f in self._find_files(self.to_dir, recursive=False)} if self.to_dir else set()
 
         success = failed = 0
         for src_file in src_files:
             filename = src_file.name
-            file_styled = self.file_style(filename)
+            file_styled = self.file_style(src_file)
+            dst_files = [f.name for f in self._find_files(self.to_dir, recursive=False)] if self.to_dir else []
             if filename not in dst_files:
                 try:
                     if action == "copy":
