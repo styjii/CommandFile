@@ -87,8 +87,12 @@ class FileManager(Styler):
             self.error(["Source directory ", self.directory(str(self.source_dir)), " does not exist."])
             return False
         if self.destination_dir and not self.destination_dir.exists():
-            self.error(["Destination directory ", self.directory(str(self.destination_dir)), " does not exist."])
-            return False
+            try:
+                self.destination_dir.mkdir()
+                self.info(["Destination directory ", self.directory(str(self.destination_dir)), " are create."])
+            except FileNotFoundError:
+                self.error(["Destination directory ", self.directory(str(self.destination_dir.parent)), " does not exist."])
+                return False
         return True
 
     def _handle_files(self, action: str) -> None:
@@ -100,30 +104,31 @@ class FileManager(Styler):
 
         success_count = failed_count = 0
 
-        for file in source_files:
-            destination_filenames = [f.name for f in self._match_files(self.destination_dir, recursive=False)]
-            name = file.name
-            styled_name = self.filename(name)
+        with typer.progressbar(source_files) as progress:
+            for file in progress:
+                destination_filenames = [f.name for f in self._match_files(self.destination_dir, recursive=False)]
+                name = file.name
+                styled_name = self.filename(name)
 
-            if name not in destination_filenames:
-                try:
-                    if action == "copy":
-                        shutil.copy(file, self.destination_dir)
-                    elif action == "move":
-                        shutil.move(file, self.destination_dir)
-                    self.success([f"{action.title().replace('y', 'ie')}d file ", styled_name])
-                    success_count += 1
-                except Exception as e:
-                    self.error([f"Failed to {action} file {styled_name}: {e}"])
+                if name not in destination_filenames:
+                    try:
+                        if action == "copy":
+                            shutil.copy(file, self.destination_dir)
+                        elif action == "move":
+                            shutil.move(file, self.destination_dir)
+                        self.success([f"{action.title().replace('y', 'ie')}d file ", styled_name])
+                        success_count += 1
+                    except Exception as e:
+                        self.error([f"Failed to {action} file {styled_name}: {e}"])
+                        failed_count += 1
+                else:
+                    self.error(["File ", styled_name, " already exists in destination."])
                     failed_count += 1
-            else:
-                self.error(["File ", styled_name, " already exists in destination."])
-                failed_count += 1
 
-        self.info([
-            self.success(str(success_count), save=False), f" {action.replace('y', 'ie')}d, ",
-            self.error(str(failed_count), save=False), " skipped."
-        ])
+            self.info([
+                self.success(str(success_count), save=False), f" {action.replace('y', 'ie')}d, ",
+                self.error(str(failed_count), save=False), " skipped."
+            ])
 
     def find(self) -> None:
         if not self._check_dirs():
@@ -131,15 +136,16 @@ class FileManager(Styler):
 
         self.heading("FILES LIST:")
         files = self._match_files(self.source_dir)
-        for file in files:
-            self.success(["File ", self.filename(file.name), " in ", self.directory(str(file.parent))])
+        with typer.progressbar(files) as progress:
+            for file in progress:
+                self.success(["File ", self.filename(file.name), " in ", self.directory(str(file.parent))])
 
-        self.info([
-            f"Found {len(files)} ",
-            self.s_extension(f"'.{self.extension}'", save=False),
-            " files in ",
-            self.directory(str(self.source_dir))
-        ])
+            self.info([
+                f"Found {len(files)} ",
+                self.s_extension(f"'.{self.extension}'", save=False),
+                " files in ",
+                self.directory(str(self.source_dir))
+            ])
 
     def copy(self) -> None:
         self._handle_files("copy")
@@ -155,17 +161,18 @@ class FileManager(Styler):
         files = self._match_files(self.source_dir)
         deleted = 0
 
-        for file in files:
-            self.filename(file.name)
-            file.unlink()
-            self.success(["Deleted file ", self.filename(file.name)])
-            deleted += 1
+        with typer.progressbar(files) as progress:
+            for file in progress:
+                self.filename(file.name)
+                file.unlink()
+                self.success(["Deleted file ", self.filename(file.name)])
+                deleted += 1
 
-        self.info([
-            self.success(str(deleted), save=False),
-            " files deleted in ",
-            self.directory(str(self.source_dir))
-        ])
+            self.info([
+                self.success(str(deleted), save=False),
+                " files deleted in ",
+                self.directory(str(self.source_dir))
+            ])
 
 
 if __name__ == "__main__":
