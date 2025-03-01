@@ -58,6 +58,7 @@ class LoadData(CustomTyperStyle):
 
     def _add_content(self, content: str): self.data_typer_contents.append(content)
 
+    @property
     def load_file(self) -> str:
         """Return all styled log entries."""
         return "\n".join(self.data_typer_contents)
@@ -72,16 +73,18 @@ class MainCommand(LoadData):
         from_dir: Source directory.
         to_dir: Destination directory.
     """
-    def __init__(self, extension: str, from_dir: Union[str, Path], to_dir: Optional[Union[str, Path]] = None):
+    def __init__(self, extension: str, from_dir: Union[str, Path], to_dir: Optional[Union[str, Path]] = None, filename: str = None):
         super().__init__()
         self.extension = extension
         self.from_dir = Path(from_dir)
         self.to_dir = Path(to_dir) if to_dir else None
+        self.filename = filename
 
     def __repr__(self): return f"Command({self.from_dir}, {self.to_dir})"
 
     def _find_files(self, directory: Path, recursive=True) -> List[Path]:
-        return list(directory.rglob(f"*.{self.extension}") if recursive else directory.glob(f"*.{self.extension}"))
+        filename = f"*{self.filename}" if self.filename else ""
+        return list(directory.rglob(f"{filename}*.{self.extension}") if recursive else directory.glob(f"{filename}*.{self.extension}"))
 
     def _directories_exist(self) -> bool:
         if not self.from_dir.exists():
@@ -164,7 +167,13 @@ class MainCommand(LoadData):
 
 
 if __name__ == '__main__':
-    base_dir = Path(__file__).parent / "data"
-    
-    cmd = MainCommand("txt", base_dir)
-    cmd.search()
+    def main():
+        # base_dir = Path(__file__).parent / "data"
+        base_dir = Path("E:\\")
+        
+        cmd = MainCommand("txt", base_dir, filename="algorithme")
+        cmd.search()
+
+        typer.echo(cmd.load_file)
+
+    typer.run(main)

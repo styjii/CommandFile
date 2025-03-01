@@ -12,7 +12,8 @@ def main(
     command: str = typer.Argument(..., help="Possible commands: list, copy, move, search, remove."),
     extension: str = typer.Argument(..., help="The file extension to target."),
     src_dir: str = typer.Argument(..., help="Source folder to operate in."),
-    dst_dir: Optional[str] = typer.Argument(None, help="Destination folder for copy or move operations.")
+    dst_dir: Optional[str] = typer.Argument(None, help="Destination folder for copy or move operations."),
+    filename: Optional[str] = typer.Option(None, help="File name to target.")
 ) -> None:
     """
     Perform file operations based on the given command.
@@ -23,7 +24,7 @@ def main(
         src_dir: Source directory where files are located.
         dst_dir: Destination directory (used for 'copy' and 'move' only).
     """
-    cmd = MainCommand(extension, src_dir, dst_dir)
+    cmd = MainCommand(extension, src_dir, dst_dir, filename)
     
     if command.lower() == "search":
         cmd.search()
@@ -40,7 +41,7 @@ def main(
     else:
         cmd.error_style("Invalid command!")
     
-    typer.echo(cmd.load_file())
+    typer.echo(cmd.load_file)
 
 
 # Ensure the data directory exists
@@ -53,7 +54,7 @@ if not data_directory.exists():
         f.write(gitignore_content)
 
 @app.command()
-def sh(extension: str, directory: Optional[str] = typer.Argument(None, help="Directory to list files from.")):
+def sh(extension: str, directory: Optional[str] = typer.Argument(None, help="Directory to list files from."), filename: Optional[str] = typer.Option(None, help="File name to target.")):
     """
     List files with the given extension in the specified directory.
 
@@ -61,28 +62,28 @@ def sh(extension: str, directory: Optional[str] = typer.Argument(None, help="Dir
     """
     if not directory:
         directory = data_directory
-    main(command="search", extension=extension, src_dir=directory, dst_dir=None)
+    main(command="search", extension=extension, src_dir=directory, dst_dir=None, filename=filename)
 
 @app.command()
-def cp(extension: str, src_dir: str, dst_dir: Optional[str] = typer.Argument(None)):
+def cp(extension: str, src_dir: str, dst_dir: Optional[str] = typer.Argument(None), filename: Optional[str] = typer.Option(None, help="File name to target.")):
     """
     Copy files with the given extension from the source to the destination directory.
     """
     if not dst_dir:
         dst_dir = data_directory
-    main(command="copy", extension=extension, src_dir=src_dir, dst_dir=dst_dir)
+    main(command="copy", extension=extension, src_dir=src_dir, dst_dir=dst_dir, filename=filename)
 
 @app.command()
-def mv(extension: str, src_dir: str, dst_dir: Optional[str] = typer.Argument(None)):
+def mv(extension: str, src_dir: str, dst_dir: Optional[str] = typer.Argument(None), filename: Optional[str] = typer.Option(None, help="File name to target.")):
     """
     Move files with the given extension from the source to the destination directory.
     """
     if not dst_dir:
         dst_dir = data_directory
-    main(command="move", extension=extension, src_dir=src_dir, dst_dir=dst_dir)
+    main(command="move", extension=extension, src_dir=src_dir, dst_dir=dst_dir, filename=filename)
 
 @app.command()
-def rm(extension: str, directory: Optional[str] = typer.Argument(None, help="Directory to remove files from.")):
+def rm(extension: str, directory: Optional[str] = typer.Argument(None, help="Directory to remove files from."), filename: Optional[str] = typer.Option(None, help="File name to target.")):
     """
     Delete files with the given extension in the specified directory.
 
@@ -90,7 +91,7 @@ def rm(extension: str, directory: Optional[str] = typer.Argument(None, help="Dir
     """
     if not directory:
         directory = data_directory
-    main(command="remove", extension=extension, src_dir=directory, dst_dir=None)
+    main(command="remove", extension=extension, src_dir=directory, dst_dir=None, filename=filename)
 
 if __name__ == '__main__':
     app()
