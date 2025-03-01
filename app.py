@@ -47,6 +47,10 @@ def main(
 data_directory = Path(__file__).parent / "data"
 if not data_directory.exists():
     data_directory.mkdir()
+    gitignore_file = data_directory / ".gitignore"
+    gitignore_content = "# Automatically created by app\n*"
+    with open(gitignore_file, "w") as f:
+        f.write(gitignore_content)
 
 @app.command()
 def sh(extension: str, directory: Optional[str] = typer.Argument(None, help="Directory to list files from.")):
