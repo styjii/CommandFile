@@ -1,6 +1,6 @@
 from pathlib import Path
 import shutil
-from typing import List, Union, Tuple, Optional
+from typing import List, Union, Optional
 import typer
 
 
@@ -54,12 +54,9 @@ class CustomTyperStyle:
 
 class LoadData(CustomTyperStyle):
     """Manages styled output history."""
-    def __init__(self):
-        self.data_typer_contents: List[str] = []
+    def __init__(self): self.data_typer_contents: List[str] = []
 
-    def _add_content(self, content: str):
-        """Store a styled string in the output log."""
-        self.data_typer_contents.append(content)
+    def _add_content(self, content: str): self.data_typer_contents.append(content)
 
     def load_file(self) -> str:
         """Return all styled log entries."""
@@ -84,11 +81,9 @@ class MainCommand(LoadData):
     def __repr__(self): return f"Command({self.from_dir}, {self.to_dir})"
 
     def _find_files(self, directory: Path, recursive=True) -> List[Path]:
-        """Find files by extension in the given directory."""
         return list(directory.rglob(f"*.{self.extension}") if recursive else directory.glob(f"*.{self.extension}"))
 
     def _directories_exist(self) -> bool:
-        """Verify if source (and if required, destination) directories exist."""
         if not self.from_dir.exists():
             self.error_style(["Source directory ", self.directory_style(str(self.from_dir)), " does not exist."])
             return False
