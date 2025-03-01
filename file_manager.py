@@ -80,7 +80,12 @@ class FileManager(Styler):
     def _match_files(self, directory: Path, recursive: bool = True) -> List[Path]:
         prefix = f"*{self.filename_prefix}" if self.filename_prefix else ""
         pattern = f"{prefix}*.{self.extension}" if self.extension else f"{prefix}*"
-        return [file for file in list(directory.rglob(pattern) if recursive else directory.glob(pattern)) if not file.is_dir()]
+        try:
+            return [file for file in list(directory.rglob(pattern) if recursive else directory.glob(pattern)) if not file.is_dir()]
+        except FileNotFoundError as e:
+            print(dir(e))
+            self.error([f"{e.strerror} : ", self.directory(e.filename)])
+            return []
 
     def _check_dirs(self) -> bool:
         if not self.source_dir.exists():
