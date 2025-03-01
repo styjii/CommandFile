@@ -1,10 +1,10 @@
-# File manipulation
+# command file
 
 This project generally handles files such as search, delete, copy, move with its extensions
 
-### Table of contents
+### table of contents
 
-- [Manipulation des fichiers](#manipulation-des-fichiers)
+- [command file](#command-file)
   - [installation](#installation)
   - [use](#use)
   - [contribution](#contribution)
