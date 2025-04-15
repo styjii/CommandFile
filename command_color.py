@@ -1,10 +1,11 @@
+from pathlib import Path
+import shutil
 from typing import List, Union, Tuple, Optional
 import typer
 
 
 class CustomTyperStyle:
     """Custom terminal styling for commands using Typer."""
-    
     def __repr__(self) -> str: return "CustomTyperStyle()"
 
     def style(self, content: Union[List[str], str], saved: Optional[bool] = True, **kwargs) -> Optional[str]:
@@ -65,19 +66,110 @@ class LoadData(CustomTyperStyle):
         return "\n".join(self.data_typer_contents)
 
 
+class MainCommand(LoadData):
+    """
+    Handles file operations such as search, copy, move, and remove.
+
+    Args:
+        extension: File extension to target.
+        from_dir: Source directory.
+        to_dir: Destination directory.
+    """
+    def __init__(self, extension: str, from_dir: Union[str, Path], to_dir: Optional[Union[str, Path]] = None):
+        super().__init__()
+        self.extension = extension
+        self.from_dir = Path(from_dir)
+        self.to_dir = Path(to_dir) if to_dir else None
+
+    def __repr__(self): return f"Command({self.from_dir}, {self.to_dir})"
+
+    def _find_files(self, directory: Path, recursive=True) -> List[Path]:
+        """Find files by extension in the given directory."""
+        return list(directory.rglob(f"*.{self.extension}") if recursive else directory.glob(f"*.{self.extension}"))
+
+    def _directories_exist(self) -> bool:
+        """Verify if source (and if required, destination) directories exist."""
+        if not self.from_dir.exists():
+            self.error_style(["Source directory ", self.directory_style(str(self.from_dir)), " does not exist."])
+            return False
+        if self.to_dir and not self.to_dir.exists():
+            self.error_style(["Destination directory ", self.directory_style(str(self.to_dir)), " does not exist."])
+            return False
+        return True
+    
+    def _process_files(self, action: str):
+        if not self._directories_exist(): 
+            return
+        self.title_style(f"{action.upper()} FILES:")
+
+        src_files = self._find_files(self.from_dir)
+        dst_files = {f.name for f in self._find_files(self.to_dir, recursive=False)} if self.to_dir else set()
+
+        success = failed = 0
+        for src_file in src_files:
+            filename = src_file.name
+            file_styled = self.file_style(filename)
+            if filename not in dst_files:
+                try:
+                    if action == "copy":
+                        shutil.copy(src_file, self.to_dir)
+                    elif action == "move":
+                        shutil.move(src_file, self.to_dir)
+                    self.success_style([f"{action.title().replace('y', 'ie')}d file ", file_styled])
+                    success += 1
+                except Exception as e:
+                    self.error_style([f"Failed to {action} file {file_styled}: {e}"])
+                    failed += 1
+            else:
+                self.error_style(["File ", file_styled, " already exists in destination."])
+                failed += 1
+
+        self.info_style([
+            self.success_style(str(success), saved=False), f" {action.replace('y', 'ie')}d, ",
+            self.error_style(str(failed), saved=False), " skipped."
+        ])
+
+    def search(self):
+        """Search files with the given extension in the source directory."""
+        if not self._directories_exist(): 
+            return
+        self.title_style("FILES LIST:")
+        files = self._find_files(self.from_dir)
+        for file in files:
+            self.success_style(["File ", self.file_style(file.name), " in ", self.directory_style(str(file.parent))])
+        self.info_style([f"Found {len(files)} " , self.extension_style(f"'.{self.extension}'", saved=False), " files in ", self.directory_style(str(self.from_dir))])
+
+    def copy(self): 
+        """Copy files to the destination directory."""
+        self._process_files("copy")
+    
+    def move(self): 
+        """Move files to the destination directory."""
+        self._process_files("move")
+
+    def remove(self):
+        """Delete files with the given extension from the source directory."""
+        if not self._directories_exist(): 
+            return
+        
+        self.title_style("DELETE FILES:")
+        files = self._find_files(self.from_dir)
+        success = 0
+        for file in files:
+            self.file_style(file.name)
+            file.unlink()
+            self.success_style(["Deleted file ", self.file_style(file.name)])
+            success += 1
+
+        self.info_style([
+            self.success_style(str(success), saved=False),
+            " files deleted in ",
+            self.directory_style(str(self.from_dir))
+        ])
+
+
 if __name__ == '__main__':
-    def main():
-        # test project
-        cmd = LoadData()
-        
-        
-        # (File script.py::fg=YELLOW,bold=True in /sdcard/test::BRIGHT_MAGENTA,bold)::fg=BRIGHT_GREEN
-        cmd.success_style(["File ", cmd.file_style("script.py"), " in ", cmd.directory_style("/sdcard/test")])
-        
-        # (moved file script.py::fg=YELLOW,bold=True)::fg=BRIGHT_GREEN
-        cmd.success_style(["moved file ", cmd.file_style("script.py")])
-        
-        # Save the text styled in a list and view
-        for data_typer_content in cmd.data_typer_contents:
-            typer.echo(data_typer_content)
-    typer.run(main)
+    base_dir = Path(__file__).parent / "data"
+    
+    cmd = MainCommand("txt", base_dir)
+    cmd.search()
