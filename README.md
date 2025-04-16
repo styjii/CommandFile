@@ -16,7 +16,7 @@ This project generally handles files such as search, delete, copy, move with its
 1. Clone le depot :
 
 ```bash
-git clone https://github.com/styjii/FileManipulation.git
+git clone https://github.com/styjii/CommandFile.git
 ```
 
 2. installez les dependance
