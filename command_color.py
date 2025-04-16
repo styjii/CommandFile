@@ -4,8 +4,24 @@ from typing import List, Union, Optional
 import typer
 
 
-class CustomTyperStyle:
+
+class LoadData:
+    """Manages styled output history."""
+    def __init__(self): self.data_typer_contents: List[str] = []
+
+    def _add_content(self, content: str): self.data_typer_contents.append(content)
+
+    @property
+    def load_file(self) -> str:
+        """Return all styled log entries."""
+        return "\n".join(self.data_typer_contents)
+        
+        
+class CustomTyperStyle(LoadData):
     """Custom terminal styling for commands using Typer."""
+    def __init__(self):
+        super().__init__()
+    
     def __repr__(self) -> str: return "CustomTyperStyle()"
 
     def style(self, content: Union[List[str], str], saved: Optional[bool] = True, **kwargs) -> Optional[str]:
@@ -52,19 +68,7 @@ class CustomTyperStyle:
         return self.style(content, bold=True, italic=True, saved=saved)
 
 
-class LoadData(CustomTyperStyle):
-    """Manages styled output history."""
-    def __init__(self): self.data_typer_contents: List[str] = []
-
-    def _add_content(self, content: str): self.data_typer_contents.append(content)
-
-    @property
-    def load_file(self) -> str:
-        """Return all styled log entries."""
-        return "\n".join(self.data_typer_contents)
-
-
-class MainCommand(LoadData):
+class MainCommand(CustomTyperStyle):
     """
     Handles file operations such as search, copy, move, and remove.
 
@@ -73,7 +77,7 @@ class MainCommand(LoadData):
         from_dir: Source directory.
         to_dir: Destination directory.
     """
-    def __init__(self, extension: str, from_dir: Union[str, Path], to_dir: Optional[Union[str, Path]] = None, filename: str = None):
+    def __init__(self, extension: str, from_dir: Union[str, Path], to_dir: Optional[Union[str, Path]] = None, filename: Optional[str] = None):
         super().__init__()
         self.extension = extension
         self.from_dir = Path(from_dir)
