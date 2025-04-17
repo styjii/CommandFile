@@ -79,7 +79,7 @@ class FileManager(Styler):
 
     def _match_files(self, directory: Path, recursive: bool = True) -> List[Path]:
         prefix = f"*{self.filename_prefix}" if self.filename_prefix else ""
-        pattern = f"{prefix}*.{self.extension}"
+        pattern = f"{prefix}*.{self.extension}" if self.extension else f"{prefix}*"
         return list(directory.rglob(pattern) if recursive else directory.glob(pattern))
 
     def _check_dirs(self) -> bool:
